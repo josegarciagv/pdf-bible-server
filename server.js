@@ -238,7 +238,7 @@ async function generateHTMLContent(posts, title) {
             <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 4px;">
               <path d="M16,4C16.56,4 17,4.44 17,5V7H19V5A3,3 0 0,0 16,2C15.44,2 15,2.44 15,3V5H17V3C17,2.44 16.56,2 16,2M12,5V7H14V5C14,4.44 13.56,4 13,4C12.44,4 12,4.44 12,5M9,4C8.44,4 8,4.44 8,5V7H10V5C10,4.44 9.56,4 9,4M6,5V7H8V5C8,4.44 7.56,4 7,4C6.44,4 6,4.44 6,5M3,6V18A2,2 0 0,0 5,20H19A2,2 0 0,0 21,18V6H3Z"/>
             </svg>
-            ${post.author || 'GV Bible'}
+            GV Bible
           </span>
         </div>
       </div>
@@ -525,7 +525,7 @@ app.get('/', (req, res) => {
         
         body {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
+          background: #ffffff;
           min-height: 100vh;
           display: flex;
           align-items: center;
