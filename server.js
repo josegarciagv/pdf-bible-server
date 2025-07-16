@@ -25,7 +25,7 @@ app.post('/api/generate-pdf', async (req, res) => {
     }
     
     // Generate HTML content for PDF
-    const htmlContent = generateHTMLContent(posts, title);
+    const htmlContent = await generateHTMLContent(posts, title);
     
     // Generate PDF using Puppeteer
     const pdfBuffer = await generatePDF(htmlContent);
@@ -38,6 +38,36 @@ app.post('/api/generate-pdf', async (req, res) => {
     
   } catch (error) {
     console.error('Error generating PDF:', error);
+    res.status(500).json({ message: 'Error generando PDF', error: error.message });
+  }
+});
+
+// Get all posts without limit endpoint
+app.get('/api/all-posts', async (req, res) => {
+  try {
+    const { title = 'Todos los Versículos Bíblicos' } = req.query;
+    
+    // Fetch all posts from gvbible.com API (multiple pages)
+    const allPosts = await fetchAllPostsFromGVBible();
+    
+    if (!allPosts || allPosts.length === 0) {
+      return res.status(404).json({ message: 'No se encontraron versículos' });
+    }
+    
+    // Generate HTML content for PDF
+    const htmlContent = await generateHTMLContent(allPosts, title);
+    
+    // Generate PDF using Puppeteer
+    const pdfBuffer = await generatePDF(htmlContent);
+    
+    // Set response headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="todos-los-versiculos-${Date.now()}.pdf"`);
+    
+    res.send(pdfBuffer);
+    
+  } catch (error) {
+    console.error('Error generating PDF with all posts:', error);
     res.status(500).json({ message: 'Error generando PDF', error: error.message });
   }
 });
@@ -64,8 +94,82 @@ async function fetchPostsFromGVBible(page, limit) {
   }
 }
 
+// Fetch all posts from gvbible.com API (multiple pages)
+async function fetchAllPostsFromGVBible() {
+  try {
+    console.log('Fetching all posts from gvbible.com...');
+    
+    const allPosts = [];
+    let page = 0;
+    let hasMorePosts = true;
+    
+    while (hasMorePosts) {
+      const url = `https://gvbible.com/api/posts?page=${page}&limit=50`;
+      console.log(`Fetching page ${page} from:`, url);
+      
+      const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const posts = await response.json();
+      console.log(`Fetched ${posts.length} posts from page ${page}`);
+      
+      if (posts.length === 0) {
+        hasMorePosts = false;
+      } else {
+        allPosts.push(...posts);
+        page++;
+        
+        // Safety limit to prevent infinite loops
+        if (page > 100) {
+          console.log('Reached safety limit of 100 pages, stopping...');
+          hasMorePosts = false;
+        }
+      }
+    }
+    
+    console.log(`Total posts fetched: ${allPosts.length}`);
+    return allPosts;
+  } catch (error) {
+    console.error('Error fetching all posts from gvbible.com:', error);
+    throw error;
+  }
+}
+
+// Fetch profile info from gvbible.com
+async function fetchProfileFromGVBible() {
+  try {
+    const url = 'https://gvbible.com/api/profile';
+    console.log('Fetching profile from:', url);
+    
+    const response = await fetch(url);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const profile = await response.json();
+    console.log('Profile fetched:', profile.name);
+    
+    return profile;
+  } catch (error) {
+    console.error('Error fetching profile from gvbible.com:', error);
+    // Return default profile if error
+    return {
+      name: 'GV Bible',
+      bio: 'Versículos y Reflexiones Bíblicas',
+      avatar: null
+    };
+  }
+}
+
 // Generate HTML content for PDF
-function generateHTMLContent(posts, title) {
+async function generateHTMLContent(posts, title) {
+  // Fetch profile info for avatar and branding
+  const profile = await fetchProfileFromGVBible();
+  
   const colorMap = {
     0: '#4CAF50', // Green
     1: '#9C27B0', // Purple
@@ -93,38 +197,70 @@ function generateHTMLContent(posts, title) {
       <div class="reflection-block" style="
         background: ${color}15;
         border-left: 4px solid ${color};
-        border-radius: 8px;
-        padding: 20px;
-        margin: 20px 0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        border-radius: 12px;
+        padding: 25px;
+        margin: 25px 0;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
       ">
         <h3 style="
           color: ${color};
-          margin: 0 0 15px 0;
-          font-size: 18px;
-          font-weight: bold;
+          margin: 0 0 18px 0;
+          font-size: 20px;
+          font-weight: 600;
+          line-height: 1.3;
         ">${post.title}</h3>
         
         <p style="
-          color: #333;
-          line-height: 1.6;
-          margin: 0 0 15px 0;
-          font-size: 14px;
+          color: #2c3e50;
+          line-height: 1.7;
+          margin: 0 0 20px 0;
+          font-size: 15px;
+          text-align: justify;
         ">${post.content}</p>
         
         <div style="
           display: flex;
           justify-content: space-between;
           align-items: center;
-          font-size: 12px;
-          color: #666;
+          font-size: 13px;
+          color: #7f8c8d;
+          border-top: 1px solid #ecf0f1;
+          padding-top: 15px;
         ">
-          <span>${formattedDate}</span>
-          <span>${post.author || 'Admin'}</span>
+          <span style="font-weight: 500;">📅 ${formattedDate}</span>
+          <span style="font-weight: 500;">✍️ ${post.author || 'GV Bible'}</span>
         </div>
       </div>
     `;
   }).join('');
+
+  // Create avatar HTML
+  const avatarHTML = profile.avatar ? 
+    `<img src="${profile.avatar}" alt="${profile.name}" style="
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid #fff;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    ">` :
+    `<div class="logo" style="
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    ">
+      📖
+    </div>`;
 
   return `
     <!DOCTYPE html>
@@ -146,93 +282,129 @@ function generateHTMLContent(posts, title) {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           line-height: 1.6;
           color: #333;
-          background: #fff;
-          padding: 40px;
+          background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+          min-height: 100vh;
+        }
+        
+        .container {
           max-width: 800px;
           margin: 0 auto;
+          background: #fff;
+          box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+          border-radius: 20px;
+          overflow: hidden;
         }
         
         .header {
           text-align: center;
-          margin-bottom: 40px;
-          padding-bottom: 30px;
-          border-bottom: 2px solid #f0f0f0;
-        }
-        
-        .logo {
-          width: 80px;
-          height: 80px;
+          padding: 40px 30px;
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          border-radius: 50%;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          margin: 0 auto 20px;
           color: white;
-          font-size: 24px;
-          font-weight: bold;
+          position: relative;
         }
         
-        .logo::before {
-          content: "📖";
-          font-size: 32px;
+        .header::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+          opacity: 0.3;
+        }
+        
+        .header-content {
+          position: relative;
+          z-index: 1;
+        }
+        
+        .avatar-container {
+          margin-bottom: 25px;
         }
         
         .title {
-          font-size: 28px;
+          font-size: 32px;
           font-weight: 700;
-          color: #1a1a1a;
-          margin-bottom: 10px;
+          margin-bottom: 15px;
+          text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
         
         .subtitle {
-          font-size: 16px;
-          color: #666;
+          font-size: 18px;
           font-weight: 400;
-          margin-bottom: 20px;
+          opacity: 0.9;
+          margin-bottom: 25px;
         }
         
-        .subscribe-info {
+        .stats {
+          display: flex;
+          justify-content: center;
+          gap: 30px;
           font-size: 14px;
-          color: #888;
-          background: #f8f9fa;
-          padding: 15px;
-          border-radius: 8px;
-          border-left: 4px solid #ff0000;
+          opacity: 0.8;
         }
         
         .content {
-          margin-top: 30px;
+          padding: 40px 30px;
         }
         
         .reflection-block {
           page-break-inside: avoid;
+          margin-bottom: 30px;
+        }
+        
+        .footer {
+          text-align: center;
+          padding: 30px;
+          background: #f8f9fa;
+          border-top: 1px solid #e9ecef;
+          color: #6c757d;
+          font-size: 14px;
         }
         
         @media print {
           body {
-            padding: 20px;
+            background: #fff;
+          }
+          
+          .container {
+            box-shadow: none;
+            border-radius: 0;
           }
           
           .reflection-block {
             page-break-inside: avoid;
-            margin: 15px 0;
+            margin: 20px 0;
           }
         }
       </style>
     </head>
     <body>
-      <div class="header">
-        <div class="logo"></div>
-        <h1 class="title">${title}</h1>
-        <p class="subtitle">Versículos bíblicos diarios • Recibe inspiración, fe y esperanza cada día</p>
-        <div class="subscribe-info">
-          ✓ Suscríbete para recibir versículos diarios en tu correo
+      <div class="container">
+        <div class="header">
+          <div class="header-content">
+            <div class="avatar-container">
+              ${avatarHTML}
+            </div>
+            <h1 class="title">${title}</h1>
+            <p class="subtitle">${profile.bio || 'Versículos bíblicos diarios • Recibe inspiración, fe y esperanza cada día'}</p>
+            <div class="stats">
+              <span>📖 ${posts.length} versículos</span>
+              <span>📅 ${new Date().toLocaleDateString('es-ES')}</span>
+              <span>✨ ${profile.name}</span>
+            </div>
+          </div>
         </div>
-      </div>
-      
-      <div class="content">
-        ${postsHTML}
+        
+        <div class="content">
+          ${postsHTML}
+        </div>
+        
+        <div class="footer">
+          <p>Generado con ❤️ por ${profile.name || 'GV Bible'}</p>
+          <p>📧 Suscríbete para recibir versículos diarios en tu correo</p>
+        </div>
       </div>
     </body>
     </html>
@@ -299,7 +471,7 @@ app.get('/api/health', (req, res) => {
   });
 });
 
-// Serve a simple test page
+// Serve a professional web interface
 app.get('/', (req, res) => {
   res.send(`
     <!DOCTYPE html>
@@ -308,83 +480,336 @@ app.get('/', (req, res) => {
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>Generador de PDF - Versículos Bíblicos</title>
+      <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
       <style>
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        
         body {
-          font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-          max-width: 800px;
-          margin: 0 auto;
-          padding: 40px;
-          line-height: 1.6;
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 20px;
         }
+        
         .container {
-          background: #f8f9fa;
-          padding: 30px;
-          border-radius: 10px;
-          border-left: 4px solid #ff0000;
+          background: white;
+          border-radius: 20px;
+          box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+          overflow: hidden;
+          max-width: 600px;
+          width: 100%;
         }
-        h1 { color: #333; margin-bottom: 20px; }
-        .form-group { margin-bottom: 20px; }
-        label { display: block; margin-bottom: 5px; font-weight: bold; }
-        input, select { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
-        button {
-          background: #ff0000;
+        
+        .header {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
           color: white;
-          padding: 12px 24px;
-          border: none;
-          border-radius: 5px;
-          cursor: pointer;
-          font-size: 16px;
+          padding: 40px 30px;
+          text-align: center;
+          position: relative;
         }
-        button:hover { background: #cc0000; }
-        .info { background: #e3f2fd; padding: 15px; border-radius: 5px; margin: 20px 0; }
+        
+        .header::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+          opacity: 0.3;
+        }
+        
+        .header-content {
+          position: relative;
+          z-index: 1;
+        }
+        
+        .logo {
+          width: 80px;
+          height: 80px;
+          background: rgba(255,255,255,0.2);
+          border-radius: 50%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin: 0 auto 20px;
+          font-size: 32px;
+          backdrop-filter: blur(10px);
+          border: 2px solid rgba(255,255,255,0.3);
+        }
+        
+        .title {
+          font-size: 28px;
+          font-weight: 700;
+          margin-bottom: 10px;
+          text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .subtitle {
+          font-size: 16px;
+          opacity: 0.9;
+          font-weight: 400;
+        }
+        
+        .content {
+          padding: 40px 30px;
+        }
+        
+        .form-group {
+          margin-bottom: 25px;
+        }
+        
+        label {
+          display: block;
+          margin-bottom: 8px;
+          font-weight: 600;
+          color: #2c3e50;
+          font-size: 14px;
+        }
+        
+        input, select {
+          width: 100%;
+          padding: 15px;
+          border: 2px solid #e9ecef;
+          border-radius: 10px;
+          font-size: 16px;
+          font-family: inherit;
+          transition: all 0.3s ease;
+          background: #f8f9fa;
+        }
+        
+        input:focus, select:focus {
+          outline: none;
+          border-color: #667eea;
+          background: white;
+          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .button-group {
+          display: flex;
+          gap: 15px;
+          margin-top: 30px;
+        }
+        
+        .btn {
+          flex: 1;
+          padding: 15px 20px;
+          border: none;
+          border-radius: 10px;
+          font-size: 16px;
+          font-weight: 600;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          font-family: inherit;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          gap: 8px;
+        }
+        
+        .btn-primary {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          color: white;
+        }
+        
+        .btn-primary:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .btn-secondary {
+          background: #f8f9fa;
+          color: #6c757d;
+          border: 2px solid #e9ecef;
+        }
+        
+        .btn-secondary:hover {
+          background: #e9ecef;
+          transform: translateY(-2px);
+        }
+        
+        .status {
+          margin-top: 20px;
+          padding: 15px;
+          border-radius: 10px;
+          font-weight: 500;
+          text-align: center;
+          display: none;
+        }
+        
+        .status.success {
+          background: #d4edda;
+          color: #155724;
+          border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+          background: #f8d7da;
+          color: #721c24;
+          border: 1px solid #f5c6cb;
+        }
+        
+        .status.loading {
+          background: #cce5ff;
+          color: #004085;
+          border: 1px solid #b8daff;
+        }
+        
+        .loading-spinner {
+          display: inline-block;
+          width: 20px;
+          height: 20px;
+          border: 3px solid rgba(255,255,255,.3);
+          border-radius: 50%;
+          border-top-color: #fff;
+          animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+        
+        .info {
+          background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+          padding: 20px;
+          border-radius: 15px;
+          margin-bottom: 30px;
+          border-left: 4px solid #2196f3;
+        }
+        
+        .info h3 {
+          color: #1976d2;
+          margin-bottom: 10px;
+          font-size: 18px;
+        }
+        
+        .info ul {
+          list-style: none;
+          padding: 0;
+        }
+        
+        .info li {
+          margin-bottom: 8px;
+          color: #424242;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        
+        .info li::before {
+          content: "✓";
+          color: #4caf50;
+          font-weight: bold;
+        }
+        
+        @media (max-width: 768px) {
+          .button-group {
+            flex-direction: column;
+          }
+          
+          .container {
+            margin: 10px;
+          }
+        }
       </style>
     </head>
     <body>
       <div class="container">
-        <h1>📖 Generador de PDF - Versículos Bíblicos</h1>
-        
-        <div class="info">
-          <strong>Instrucciones:</strong><br>
-          • page: Número de página (0 = primera página)<br>
-          • limit: Cantidad de versículos por página (máximo 50)<br>
-          • title: Título personalizado del PDF
+        <div class="header">
+          <div class="header-content">
+            <div class="logo">📖</div>
+            <h1 class="title">Generador de PDF</h1>
+            <p class="subtitle">Versículos Bíblicos Profesionales</p>
+          </div>
         </div>
         
-        <form id="pdfForm">
-          <div class="form-group">
-            <label for="page">Página:</label>
-            <input type="number" id="page" name="page" value="0" min="0">
+        <div class="content">
+          <div class="info">
+            <h3>✨ Características</h3>
+            <ul>
+              <li>Diseño profesional sin iconos</li>
+              <li>Avatar e información de gvbible.com</li>
+              <li>Colores dinámicos para cada versículo</li>
+              <li>Formato optimizado para impresión</li>
+            </ul>
           </div>
           
-          <div class="form-group">
-            <label for="limit">Versículos por página:</label>
-            <select id="limit" name="limit">
-              <option value="5">5 versículos</option>
-              <option value="10" selected>10 versículos</option>
-              <option value="15">15 versículos</option>
-              <option value="20">20 versículos</option>
-              <option value="30">30 versículos</option>
-              <option value="50">50 versículos</option>
-            </select>
-          </div>
+          <form id="pdfForm">
+            <div class="form-group">
+              <label for="page">📄 Página:</label>
+              <input type="number" id="page" name="page" value="0" min="0" placeholder="0 = primera página">
+            </div>
+            
+            <div class="form-group">
+              <label for="limit">📊 Versículos por página:</label>
+              <select id="limit" name="limit">
+                <option value="5">5 versículos</option>
+                <option value="10" selected>10 versículos</option>
+                <option value="15">15 versículos</option>
+                <option value="20">20 versículos</option>
+                <option value="30">30 versículos</option>
+                <option value="50">50 versículos</option>
+              </select>
+            </div>
+            
+            <div class="form-group">
+              <label for="title">📝 Título del PDF:</label>
+              <input type="text" id="title" name="title" value="Versículos y Reflexiones Bíblicas" placeholder="Título personalizado">
+            </div>
+            
+            <div class="button-group">
+              <button type="submit" class="btn btn-primary">
+                <span class="btn-text">📄 Generar PDF</span>
+                <span class="btn-loading" style="display: none;">
+                  <span class="loading-spinner"></span>
+                  Downloading...
+                </span>
+              </button>
+              
+              <button type="button" class="btn btn-secondary" onclick="generateAllPosts()">
+                📚 Todos los Versículos
+              </button>
+            </div>
+          </form>
           
-          <div class="form-group">
-            <label for="title">Título del PDF:</label>
-            <input type="text" id="title" name="title" value="Versículos y Reflexiones Bíblicas">
-          </div>
-          
-          <button type="submit">📄 Generar PDF</button>
-        </form>
-        
-        <div id="status" style="margin-top: 20px;"></div>
+          <div id="status" class="status"></div>
+        </div>
       </div>
       
       <script>
-        document.getElementById('pdfForm').addEventListener('submit', async (e) => {
+        const form = document.getElementById('pdfForm');
+        const statusDiv = document.getElementById('status');
+        const btnText = document.querySelector('.btn-text');
+        const btnLoading = document.querySelector('.btn-loading');
+        
+        function showStatus(message, type) {
+          statusDiv.textContent = message;
+          statusDiv.className = \`status \${type}\`;
+          statusDiv.style.display = 'block';
+        }
+        
+        function showLoading() {
+          btnText.style.display = 'none';
+          btnLoading.style.display = 'flex';
+        }
+        
+        function hideLoading() {
+          btnText.style.display = 'flex';
+          btnLoading.style.display = 'none';
+        }
+        
+        form.addEventListener('submit', async (e) => {
           e.preventDefault();
           
-          const statusDiv = document.getElementById('status');
-          statusDiv.innerHTML = '⏳ Generando PDF...';
+          showLoading();
+          showStatus('⏳ Descargando PDF...', 'loading');
           
           const formData = new FormData(e.target);
           const data = {
@@ -413,15 +838,49 @@ app.get('/', (req, res) => {
               window.URL.revokeObjectURL(url);
               document.body.removeChild(a);
               
-              statusDiv.innerHTML = '✅ PDF generado exitosamente';
+              showStatus('✅ PDF generado y descargado exitosamente', 'success');
             } else {
               const error = await response.json();
-              statusDiv.innerHTML = '❌ Error: ' + (error.message || 'Error desconocido');
+              showStatus('❌ Error: ' + (error.message || 'Error desconocido'), 'error');
             }
           } catch (error) {
-            statusDiv.innerHTML = '❌ Error de conexión: ' + error.message;
+            showStatus('❌ Error de conexión: ' + error.message, 'error');
+          } finally {
+            hideLoading();
           }
         });
+        
+        async function generateAllPosts() {
+          showLoading();
+          showStatus('⏳ Descargando todos los versículos...', 'loading');
+          
+          try {
+            const response = await fetch('/api/all-posts?title=Todos los Versículos Bíblicos', {
+              method: 'GET'
+            });
+            
+            if (response.ok) {
+              const blob = await response.blob();
+              const url = window.URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'todos-los-versiculos.pdf';
+              document.body.appendChild(a);
+              a.click();
+              window.URL.revokeObjectURL(url);
+              document.body.removeChild(a);
+              
+              showStatus('✅ Todos los versículos generados y descargados', 'success');
+            } else {
+              const error = await response.json();
+              showStatus('❌ Error: ' + (error.message || 'Error desconocido'), 'error');
+            }
+          } catch (error) {
+            showStatus('❌ Error de conexión: ' + error.message, 'error');
+          } finally {
+            hideLoading();
+          }
+        }
       </script>
     </body>
     </html>

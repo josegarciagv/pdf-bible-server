@@ -73,8 +73,8 @@ echo.
 echo 📖 Accede a http://localhost:3000 para usar la interfaz web
 echo 🔗 API endpoint: POST http://localhost:3000/api/generate-pdf
 echo.
-echo 🧪 Para ejecutar pruebas:
-echo    node test-example.js
+echo 🧪 Para probar la API:
+echo    Accede a http://localhost:3000 para usar la interfaz web
 echo.
 echo 📚 Lee el README.md para más información
 echo.

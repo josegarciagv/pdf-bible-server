@@ -79,8 +79,15 @@ docker run -p 3000:3000 bible-pdf-generator
 ## 🧪 Pruebas
 
 ```bash
-# Ejecutar pruebas automáticas
-node test-example.js
+# Probar la API directamente
+curl -X POST http://localhost:3000/api/generate-pdf \
+  -H "Content-Type: application/json" \
+  -d '{"page": 0, "limit": 10}' \
+  --output versiculos.pdf
+
+# Obtener todos los versículos
+curl -X GET http://localhost:3000/api/all-posts \
+  --output todos-los-versiculos.pdf
 ```
 
 ## 📚 Más Información
