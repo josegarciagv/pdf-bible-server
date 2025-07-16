@@ -258,16 +258,16 @@ async function generateHTMLContent(posts, title) {
     `<div class="logo" style="
       width: 80px;
       height: 80px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: #f8f9fa;
+      border: 3px solid #e9ecef;
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       margin: 0 auto 20px;
-      color: white;
+      color: #6c757d;
       font-size: 24px;
       font-weight: bold;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     ">
       📖
     </div>`;
@@ -308,21 +308,13 @@ async function generateHTMLContent(posts, title) {
         .header {
           text-align: center;
           padding: 40px 30px;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
+          background: #ffffff;
+          color: #333;
           position: relative;
+          border-bottom: 2px solid #e9ecef;
         }
         
-        .header::before {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="0.5" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
-          opacity: 0.3;
-        }
+
         
         .header-content {
           position: relative;
@@ -337,13 +329,13 @@ async function generateHTMLContent(posts, title) {
           font-size: 32px;
           font-weight: 700;
           margin-bottom: 15px;
-          text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+          color: #2c3e50;
         }
         
         .subtitle {
           font-size: 18px;
           font-weight: 400;
-          opacity: 0.9;
+          color: #6c757d;
           margin-bottom: 25px;
         }
         
@@ -352,7 +344,7 @@ async function generateHTMLContent(posts, title) {
           justify-content: center;
           gap: 30px;
           font-size: 14px;
-          opacity: 0.8;
+          color: #6c757d;
         }
         
         .content {
@@ -711,38 +703,7 @@ app.get('/', (req, res) => {
           to { transform: rotate(360deg); }
         }
         
-        .info {
-          background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
-          padding: 20px;
-          border-radius: 15px;
-          margin-bottom: 30px;
-          border-left: 4px solid #2196f3;
-        }
-        
-        .info h3 {
-          color: #1976d2;
-          margin-bottom: 10px;
-          font-size: 18px;
-        }
-        
-        .info ul {
-          list-style: none;
-          padding: 0;
-        }
-        
-        .info li {
-          margin-bottom: 8px;
-          color: #424242;
-          display: flex;
-          align-items: center;
-          gap: 8px;
-        }
-        
-        .info li::before {
-          content: "✓";
-          color: #4caf50;
-          font-weight: bold;
-        }
+
         
         @media (max-width: 768px) {
           .button-group {
@@ -770,20 +731,7 @@ app.get('/', (req, res) => {
         </div>
         
         <div class="content">
-          <div class="info">
-            <h3>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 8px;">
-                <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z"/>
-              </svg>
-              Características
-            </h3>
-            <ul>
-              <li>Diseño profesional sin iconos</li>
-              <li>Avatar e información de gvbible.com</li>
-              <li>Colores dinámicos para cada versículo</li>
-              <li>Formato optimizado para impresión</li>
-            </ul>
-          </div>
+
           
           <form id="pdfForm">
             <div class="form-group">
