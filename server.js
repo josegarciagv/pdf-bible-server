@@ -228,8 +228,18 @@ async function generateHTMLContent(posts, title) {
           border-top: 1px solid #ecf0f1;
           padding-top: 15px;
         ">
-          <span style="font-weight: 500;">📅 ${formattedDate}</span>
-          <span style="font-weight: 500;">✍️ ${post.author || 'GV Bible'}</span>
+          <span style="font-weight: 500;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 4px;">
+              <path d="M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3H18V1"/>
+            </svg>
+            ${formattedDate}
+          </span>
+          <span style="font-weight: 500;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 4px;">
+              <path d="M16,4C16.56,4 17,4.44 17,5V7H19V5A3,3 0 0,0 16,2C15.44,2 15,2.44 15,3V5H17V3C17,2.44 16.56,2 16,2M12,5V7H14V5C14,4.44 13.56,4 13,4C12.44,4 12,4.44 12,5M9,4C8.44,4 8,4.44 8,5V7H10V5C10,4.44 9.56,4 9,4M6,5V7H8V5C8,4.44 7.56,4 7,4C6.44,4 6,4.44 6,5M3,6V18A2,2 0 0,0 5,20H19A2,2 0 0,0 21,18V6H3Z"/>
+            </svg>
+            ${post.author || 'GV Bible'}
+          </span>
         </div>
       </div>
     `;
@@ -390,9 +400,24 @@ async function generateHTMLContent(posts, title) {
             <h1 class="title">${title}</h1>
             <p class="subtitle">${profile.bio || 'Versículos bíblicos diarios • Recibe inspiración, fe y esperanza cada día'}</p>
             <div class="stats">
-              <span>📖 ${posts.length} versículos</span>
-              <span>📅 ${new Date().toLocaleDateString('es-ES')}</span>
-              <span>✨ ${profile.name}</span>
+              <span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 4px;">
+                  <path d="M21,5c-1.11-0.35-2.33-0.5-3.5-0.5c-1.95,0-4.05,0.4-5.5,1.5c-1.45-1.1-3.55-1.5-5.5-1.5S2.45,4.9,1,6v14.65c0,0.25,0.25,0.5,0.5,0.5c0.1,0,0.15-0.05,0.25-0.05C3.1,20.45,5.05,20,6.5,20c1.95,0,4.05,0.4,5.5,1.5c1.35-0.85,3.8-1.5,5.5-1.5c1.65,0,3.35,0.3,4.75,1.05c0.1,0.05,0.15,0.05,0.25,0.05c0.25,0,0.5-0.25,0.5-0.5V6C22.4,5.55,21.75,5.25,21,5z M21,18.5c-1.1-0.35-2.3-0.5-3.5-0.5c-1.7,0-4.15,0.65-5.5,1.5V8c1.35-0.85,3.8-1.5,5.5-1.5c1.2,0,2.4,0.15,3.5,0.5V18.5z"/>
+                </svg>
+                ${posts.length} versículos
+              </span>
+              <span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 4px;">
+                  <path d="M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3H18V1"/>
+                </svg>
+                ${new Date().toLocaleDateString('es-ES')}
+              </span>
+              <span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 4px;">
+                  <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z"/>
+                </svg>
+                ${profile.name}
+              </span>
             </div>
           </div>
         </div>
@@ -402,8 +427,18 @@ async function generateHTMLContent(posts, title) {
         </div>
         
         <div class="footer">
-          <p>Generado con ❤️ por ${profile.name || 'GV Bible'}</p>
-          <p>📧 Suscríbete para recibir versículos diarios en tu correo</p>
+          <p>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 4px;">
+              <path d="M12,21.35L10.55,20.03C5.4,15.36 2,12.27 2,8.5C2,5.41 4.42,3 7.5,3C9.24,3 10.91,3.81 12,5.08C13.09,3.81 14.76,3 16.5,3C19.58,3 22,5.41 22,8.5C22,12.27 18.6,15.36 13.45,20.03L12,21.35Z"/>
+            </svg>
+            Generado con amor por ${profile.name || 'GV Bible'}
+          </p>
+          <p>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 4px;">
+              <path d="M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z"/>
+            </svg>
+            Suscríbete para recibir versículos diarios en tu correo
+          </p>
         </div>
       </div>
     </body>
@@ -490,7 +525,7 @@ app.get('/', (req, res) => {
         
         body {
           font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
           min-height: 100vh;
           display: flex;
           align-items: center;
@@ -508,7 +543,7 @@ app.get('/', (req, res) => {
         }
         
         .header {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
           color: white;
           padding: 40px 30px;
           text-align: center;
@@ -587,9 +622,9 @@ app.get('/', (req, res) => {
         
         input:focus, select:focus {
           outline: none;
-          border-color: #667eea;
+          border-color: #ff0000;
           background: white;
-          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+          box-shadow: 0 0 0 3px rgba(255, 0, 0, 0.1);
         }
         
         .button-group {
@@ -615,13 +650,13 @@ app.get('/', (req, res) => {
         }
         
         .btn-primary {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: linear-gradient(135deg, #ff0000 0%, #cc0000 100%);
           color: white;
         }
         
         .btn-primary:hover {
           transform: translateY(-2px);
-          box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+          box-shadow: 0 8px 25px rgba(255, 0, 0, 0.3);
         }
         
         .btn-secondary {
@@ -724,7 +759,11 @@ app.get('/', (req, res) => {
       <div class="container">
         <div class="header">
           <div class="header-content">
-            <div class="logo">📖</div>
+            <div class="logo">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21,5c-1.11-0.35-2.33-0.5-3.5-0.5c-1.95,0-4.05,0.4-5.5,1.5c-1.45-1.1-3.55-1.5-5.5-1.5S2.45,4.9,1,6v14.65c0,0.25,0.25,0.5,0.5,0.5c0.1,0,0.15-0.05,0.25-0.05C3.1,20.45,5.05,20,6.5,20c1.95,0,4.05,0.4,5.5,1.5c1.35-0.85,3.8-1.5,5.5-1.5c1.65,0,3.35,0.3,4.75,1.05c0.1,0.05,0.15,0.05,0.25,0.05c0.25,0,0.5-0.25,0.5-0.5V6C22.4,5.55,21.75,5.25,21,5z M21,18.5c-1.1-0.35-2.3-0.5-3.5-0.5c-1.7,0-4.15,0.65-5.5,1.5V8c1.35-0.85,3.8-1.5,5.5-1.5c1.2,0,2.4,0.15,3.5,0.5V18.5z"/>
+              </svg>
+            </div>
             <h1 class="title">Generador de PDF</h1>
             <p class="subtitle">Versículos Bíblicos Profesionales</p>
           </div>
@@ -732,7 +771,12 @@ app.get('/', (req, res) => {
         
         <div class="content">
           <div class="info">
-            <h3>✨ Características</h3>
+            <h3>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 8px;">
+                <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z"/>
+              </svg>
+              Características
+            </h3>
             <ul>
               <li>Diseño profesional sin iconos</li>
               <li>Avatar e información de gvbible.com</li>
@@ -743,12 +787,22 @@ app.get('/', (req, res) => {
           
           <form id="pdfForm">
             <div class="form-group">
-              <label for="page">📄 Página:</label>
+              <label for="page">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 6px;">
+                  <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                </svg>
+                Página:
+              </label>
               <input type="number" id="page" name="page" value="0" min="0" placeholder="0 = primera página">
             </div>
             
             <div class="form-group">
-              <label for="limit">📊 Versículos por página:</label>
+              <label for="limit">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 6px;">
+                  <path d="M3,13H5V11H3V13M3,17H5V15H3V17M3,9H5V7H3V9M7,13H21V11H7V13M7,17H21V15H7V17M7,7V9H21V7H7Z"/>
+                </svg>
+                Versículos por página:
+              </label>
               <select id="limit" name="limit">
                 <option value="5">5 versículos</option>
                 <option value="10" selected>10 versículos</option>
@@ -760,13 +814,23 @@ app.get('/', (req, res) => {
             </div>
             
             <div class="form-group">
-              <label for="title">📝 Título del PDF:</label>
+              <label for="title">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 6px;">
+                  <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/>
+                </svg>
+                Título del PDF:
+              </label>
               <input type="text" id="title" name="title" value="Versículos y Reflexiones Bíblicas" placeholder="Título personalizado">
             </div>
             
             <div class="button-group">
               <button type="submit" class="btn btn-primary">
-                <span class="btn-text">📄 Generar PDF</span>
+                <span class="btn-text">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 6px;">
+                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
+                  </svg>
+                  Generar PDF
+                </span>
                 <span class="btn-loading" style="display: none;">
                   <span class="loading-spinner"></span>
                   Downloading...
@@ -774,7 +838,10 @@ app.get('/', (req, res) => {
               </button>
               
               <button type="button" class="btn btn-secondary" onclick="generateAllPosts()">
-                📚 Todos los Versículos
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 6px;">
+                  <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,5V19H5V5H19Z"/>
+                </svg>
+                Todos los Versículos
               </button>
             </div>
           </form>
