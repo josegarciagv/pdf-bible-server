@@ -352,7 +352,7 @@ async function generateHTMLContent(posts, title) {
   `;
 }
 
-// Generate PDF using html-pdf-node
+// Generate PDF using html-pdf-node with fallback
 async function generatePDF(htmlContent) {
   try {
     console.log('Starting PDF generation...');
@@ -368,35 +368,92 @@ async function generatePDF(htmlContent) {
     
     console.log('Optimized HTML length:', optimizedHTML.length);
     
+    // Use minimal options for Railway compatibility
     const options = {
       format: 'A4',
       margin: {
-        top: '15mm',
-        right: '15mm',
-        bottom: '15mm',
-        left: '15mm'
+        top: '10mm',
+        right: '10mm',
+        bottom: '10mm',
+        left: '10mm'
       },
-      printBackground: false, // Disable background for faster processing
-      preferCSSPageSize: false, // Disable for faster processing
-      timeout: 30000 // Reduce timeout to 30 seconds
+      printBackground: false,
+      preferCSSPageSize: false,
+      timeout: 45000 // Increase timeout for Railway
     };
     
     const file = { content: optimizedHTML };
     
     console.log('Generating PDF with html-pdf-node...');
-    const pdfBuffer = await Promise.race([
-      htmlPdf.generatePdf(file, options),
-      new Promise((_, reject) => 
-        setTimeout(() => reject(new Error('PDF generation timeout')), 30000)
-      )
-    ]);
     
-    console.log('PDF generated successfully, size:', pdfBuffer.length);
-    return pdfBuffer;
+    // Try multiple times with different strategies
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      try {
+        console.log(`PDF generation attempt ${attempt}/3...`);
+        
+        const pdfBuffer = await Promise.race([
+          htmlPdf.generatePdf(file, options),
+          new Promise((_, reject) => 
+            setTimeout(() => reject(new Error(`PDF generation timeout (attempt ${attempt})`)), 45000)
+          )
+        ]);
+        
+        console.log('PDF generated successfully, size:', pdfBuffer.length);
+        return pdfBuffer;
+        
+      } catch (attemptError) {
+        console.log(`Attempt ${attempt} failed:`, attemptError.message);
+        
+        if (attempt === 3) {
+          throw attemptError;
+        }
+        
+        // Wait before retry
+        await new Promise(resolve => setTimeout(resolve, 2000));
+      }
+    }
     
   } catch (error) {
     console.error('Error generating PDF:', error);
-    throw error;
+    
+    // Fallback: Generate a simple PDF with minimal content
+    console.log('Attempting fallback PDF generation...');
+    try {
+      const fallbackHTML = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Versículos Bíblicos</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            h1 { color: #333; }
+            .verse { margin: 20px 0; padding: 10px; border-left: 3px solid #4CAF50; }
+          </style>
+        </head>
+        <body>
+          <h1>Versículos Bíblicos</h1>
+          <p>PDF generado con contenido simplificado debido a limitaciones del servidor.</p>
+          <p>Por favor, intente nuevamente en unos momentos.</p>
+        </body>
+        </html>
+      `;
+      
+      const fallbackOptions = {
+        format: 'A4',
+        margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' },
+        printBackground: false,
+        timeout: 15000
+      };
+      
+      const fallbackBuffer = await htmlPdf.generatePdf({ content: fallbackHTML }, fallbackOptions);
+      console.log('Fallback PDF generated successfully, size:', fallbackBuffer.length);
+      return fallbackBuffer;
+      
+    } catch (fallbackError) {
+      console.error('Fallback PDF generation also failed:', fallbackError);
+      throw new Error('PDF generation failed after multiple attempts');
+    }
   }
 }
 
