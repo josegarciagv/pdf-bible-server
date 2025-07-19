@@ -501,6 +501,9 @@ async function generateHTMLContent(posts, title) {
 // Generate PDF using html-pdf-node
 async function generatePDF(htmlContent) {
   try {
+    console.log('Starting PDF generation...');
+    console.log('HTML content length:', htmlContent.length);
+    
     const options = {
       format: 'A4',
       margin: {
@@ -510,12 +513,21 @@ async function generatePDF(htmlContent) {
         left: '20mm'
       },
       printBackground: true,
-      preferCSSPageSize: true
+      preferCSSPageSize: true,
+      timeout: 60000 // 60 seconds timeout
     };
     
     const file = { content: htmlContent };
-    const pdfBuffer = await htmlPdf.generatePdf(file, options);
     
+    console.log('Generating PDF with html-pdf-node...');
+    const pdfBuffer = await Promise.race([
+      htmlPdf.generatePdf(file, options),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('PDF generation timeout')), 60000)
+      )
+    ]);
+    
+    console.log('PDF generated successfully, size:', pdfBuffer.length);
     return pdfBuffer;
     
   } catch (error) {
