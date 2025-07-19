@@ -252,36 +252,52 @@ async function generateHTMLContent(posts, title) {
     });
 
     return `
-      <div style="
+      <div class="reflection-block" style="
         background: ${color}15;
         border-left: 4px solid ${color};
-        border-radius: 8px;
-        padding: 20px;
-        margin: 20px 0;
-        page-break-inside: avoid;
+        border-radius: 12px;
+        padding: 25px;
+        margin: 25px 0;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
       ">
         <h3 style="
           color: ${color};
-          margin: 0 0 15px 0;
-          font-size: 18px;
+          margin: 0 0 18px 0;
+          font-size: 20px;
           font-weight: 600;
+          line-height: 1.3;
         ">${post.title}</h3>
         
         <p style="
           color: #2c3e50;
-          line-height: 1.6;
-          margin: 0 0 15px 0;
-          font-size: 14px;
+          line-height: 1.7;
+          margin: 0 0 20px 0;
+          font-size: 15px;
+          text-align: justify;
         ">${post.content}</p>
         
         <div style="
-          font-size: 12px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          font-size: 13px;
           color: #7f8c8d;
           border-top: 1px solid #ecf0f1;
-          padding-top: 10px;
+          padding-top: 15px;
         ">
-          <span>📅 ${formattedDate}</span>
-          <span style="float: right;">📖 GV Bible</span>
+          <span style="font-weight: 500;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 4px;">
+              <path d="M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3H18V1"/>
+            </svg>
+            ${formattedDate}
+          </span>
+          <span style="font-weight: 500;">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 4px;">
+              <path d="M16,4C16.56,4 17,4.44 17,5V7H19V5A3,3 0 0,0 16,2C15.44,2 15,2.44 15,3V5H17V3C17,2.44 16.56,2 16,2M12,5V7H14V5C14,4.44 13.56,4 13,4C12.44,4 12,4.44 12,5M9,4C8.44,4 8,4.44 8,5V7H10V5C10,4.44 9.56,4 9,4M6,5V7H8V5C8,4.44 7.56,4 7,4C6.44,4 6,4.44 6,5M3,6V18A2,2 0 0,0 5,20H19A2,2 0 0,0 21,18V6H3Z"/>
+            </svg>
+            GV Bible
+          </span>
         </div>
       </div>
     `;
@@ -319,33 +335,159 @@ async function generateHTMLContent(posts, title) {
     <html lang="es">
     <head>
       <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
       <title>${title}</title>
       <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; color: #333; }
-        .header { text-align: center; margin-bottom: 30px; }
-        .title { font-size: 24px; font-weight: bold; margin-bottom: 10px; }
-        .subtitle { font-size: 14px; color: #666; margin-bottom: 20px; }
-        .stats { font-size: 12px; color: #888; }
-        .content { margin: 20px 0; }
-        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #666; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+          margin: 0;
+          padding: 0;
+          box-sizing: border-box;
+        }
+        
+        body {
+          font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          line-height: 1.6;
+          color: #333;
+          background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+          min-height: 100vh;
+        }
+        
+        .container {
+          max-width: 800px;
+          margin: 0 auto;
+          background: #fff;
+          box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+          border-radius: 20px;
+          overflow: hidden;
+        }
+        
+        .header {
+          text-align: center;
+          padding: 40px 30px;
+          background: #ffffff;
+          color: #333;
+          position: relative;
+          border-bottom: 2px solid #e9ecef;
+        }
+        
+        .header-content {
+          position: relative;
+          z-index: 1;
+        }
+        
+        .avatar-container {
+          margin-bottom: 25px;
+        }
+        
+        .title {
+          font-size: 32px;
+          font-weight: 700;
+          margin-bottom: 15px;
+          color: #2c3e50;
+        }
+        
+        .subtitle {
+          font-size: 18px;
+          font-weight: 400;
+          color: #6c757d;
+          margin-bottom: 25px;
+        }
+        
+        .stats {
+          display: flex;
+          justify-content: center;
+          gap: 30px;
+          font-size: 14px;
+          color: #6c757d;
+        }
+        
+        .content {
+          padding: 40px 30px;
+        }
+        
+        .reflection-block {
+          page-break-inside: avoid;
+          margin-bottom: 30px;
+        }
+        
+        .footer {
+          text-align: center;
+          padding: 30px;
+          background: #f8f9fa;
+          border-top: 1px solid #e9ecef;
+          color: #6c757d;
+          font-size: 14px;
+        }
+        
+        @media print {
+          body {
+            background: #fff;
+          }
+          
+          .container {
+            box-shadow: none;
+            border-radius: 0;
+          }
+          
+          .reflection-block {
+            page-break-inside: avoid;
+            margin: 20px 0;
+          }
+        }
       </style>
     </head>
     <body>
-      <div class="header">
-        <h1 class="title">${title}</h1>
-        <p class="subtitle">${profile.bio || 'Versículos bíblicos diarios'}</p>
-        <div class="stats">
-          📖 ${posts.length} versículos • 📅 ${new Date().toLocaleDateString('es-ES')} • 👤 ${profile.name}
+      <div class="container">
+        <div class="header">
+          <div class="header-content">
+            <div class="avatar-container">
+              ${avatarHTML}
+            </div>
+            <h1 class="title">${title}</h1>
+            <p class="subtitle">${profile.bio || 'Versículos bíblicos diarios • Recibe inspiración, fe y esperanza cada día'}</p>
+            <div class="stats">
+              <span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 4px;">
+                  <path d="M21,5c-1.11-0.35-2.33-0.5-3.5-0.5c-1.95,0-4.05,0.4-5.5,1.5c-1.45-1.1-3.55-1.5-5.5-1.5S2.45,4.9,1,6v14.65c0,0.25,0.25,0.5,0.5,0.5c0.1,0,0.15-0.05,0.25-0.05C3.1,20.45,5.05,20,6.5,20c1.95,0,4.05,0.4,5.5,1.5c1.35-0.85,3.8-1.5,5.5-1.5c1.65,0,3.35,0.3,4.75,1.05c0.1,0.05,0.15,0.05,0.25,0.05c0.25,0,0.5-0.25,0.5-0.5V6C22.4,5.55,21.75,5.25,21,5z M21,18.5c-1.1-0.35-2.3-0.5-3.5-0.5c-1.7,0-4.15,0.65-5.5,1.5V8c1.35-0.85,3.8-1.5,5.5-1.5c1.2,0,2.4,0.15,3.5,0.5V18.5z"/>
+                </svg>
+                ${posts.length} versículos
+              </span>
+              <span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 4px;">
+                  <path d="M19,19H5V8H19M16,1V3H8V1H6V3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3H18V1"/>
+                </svg>
+                ${new Date().toLocaleDateString('es-ES')}
+              </span>
+              <span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 4px;">
+                  <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4M12,6A6,6 0 0,1 18,12A6,6 0 0,1 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6M12,8A4,4 0 0,0 8,12A4,4 0 0,0 12,16A4,4 0 0,0 16,12A4,4 0 0,0 12,8Z"/>
+                </svg>
+                ${profile.name}
+              </span>
+            </div>
+          </div>
         </div>
-      </div>
-      
-      <div class="content">
-        ${postsHTML}
-      </div>
-      
-      <div class="footer">
-        <p>❤️ Generado con amor por ${profile.name || 'GV Bible'}</p>
-        <p>📧 Suscríbete para recibir versículos diarios</p>
+        
+        <div class="content">
+          ${postsHTML}
+        </div>
+        
+        <div class="footer">
+          <p>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 4px;">
+              <path d="M12,21.35L10.55,20.03C5.4,15.36 2,12.27 2,8.5C2,5.41 4.42,3 7.5,3C9.24,3 10.91,3.81 12,5.08C13.09,3.81 14.76,3 16.5,3C19.58,3 22,5.41 22,8.5C22,12.27 18.6,15.36 13.45,20.03L12,21.35Z"/>
+            </svg>
+            Generado con amor por ${profile.name || 'GV Bible'}
+          </p>
+          <p>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 4px;">
+              <path d="M20,8L12,13L4,8V6L12,11L20,6M20,4H4C2.89,4 2,4.89 2,6V18A2,2 0 0,0 4,20H20A2,2 0 0,0 22,18V6C22,4.89 21.1,4 20,4Z"/>
+            </svg>
+            Suscríbete para recibir versículos diarios en tu correo
+          </p>
+        </div>
       </div>
     </body>
     </html>
@@ -356,104 +498,31 @@ async function generateHTMLContent(posts, title) {
 async function generatePDF(htmlContent) {
   try {
     console.log('Starting PDF generation...');
-    console.log('HTML content length:', htmlContent.length);
     
-    // Optimize HTML content for faster processing
-    const optimizedHTML = htmlContent
-      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '') // Remove complex CSS
-      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '') // Remove scripts
-      .replace(/<!--[\s\S]*?-->/g, '') // Remove comments
-      .replace(/\s+/g, ' ') // Compress whitespace
-      .trim();
-    
-    console.log('Optimized HTML length:', optimizedHTML.length);
-    
-    // Use minimal options for Railway compatibility
     const options = {
       format: 'A4',
       margin: {
-        top: '10mm',
-        right: '10mm',
-        bottom: '10mm',
-        left: '10mm'
+        top: '15mm',
+        right: '15mm',
+        bottom: '15mm',
+        left: '15mm'
       },
-      printBackground: false,
-      preferCSSPageSize: false,
-      timeout: 45000 // Increase timeout for Railway
+      printBackground: true,
+      preferCSSPageSize: true,
+      timeout: 30000
     };
     
-    const file = { content: optimizedHTML };
+    const file = { content: htmlContent };
     
     console.log('Generating PDF with html-pdf-node...');
+    const pdfBuffer = await htmlPdf.generatePdf(file, options);
     
-    // Try multiple times with different strategies
-    for (let attempt = 1; attempt <= 3; attempt++) {
-      try {
-        console.log(`PDF generation attempt ${attempt}/3...`);
-        
-        const pdfBuffer = await Promise.race([
-          htmlPdf.generatePdf(file, options),
-          new Promise((_, reject) => 
-            setTimeout(() => reject(new Error(`PDF generation timeout (attempt ${attempt})`)), 45000)
-          )
-        ]);
-        
-        console.log('PDF generated successfully, size:', pdfBuffer.length);
-        return pdfBuffer;
-        
-      } catch (attemptError) {
-        console.log(`Attempt ${attempt} failed:`, attemptError.message);
-        
-        if (attempt === 3) {
-          throw attemptError;
-        }
-        
-        // Wait before retry
-        await new Promise(resolve => setTimeout(resolve, 2000));
-      }
-    }
+    console.log('PDF generated successfully, size:', pdfBuffer.length);
+    return pdfBuffer;
     
   } catch (error) {
     console.error('Error generating PDF:', error);
-    
-    // Fallback: Generate a simple PDF with minimal content
-    console.log('Attempting fallback PDF generation...');
-    try {
-      const fallbackHTML = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <title>Versículos Bíblicos</title>
-          <style>
-            body { font-family: Arial, sans-serif; margin: 20px; }
-            h1 { color: #333; }
-            .verse { margin: 20px 0; padding: 10px; border-left: 3px solid #4CAF50; }
-          </style>
-        </head>
-        <body>
-          <h1>Versículos Bíblicos</h1>
-          <p>PDF generado con contenido simplificado debido a limitaciones del servidor.</p>
-          <p>Por favor, intente nuevamente en unos momentos.</p>
-        </body>
-        </html>
-      `;
-      
-      const fallbackOptions = {
-        format: 'A4',
-        margin: { top: '10mm', right: '10mm', bottom: '10mm', left: '10mm' },
-        printBackground: false,
-        timeout: 15000
-      };
-      
-      const fallbackBuffer = await htmlPdf.generatePdf({ content: fallbackHTML }, fallbackOptions);
-      console.log('Fallback PDF generated successfully, size:', fallbackBuffer.length);
-      return fallbackBuffer;
-      
-    } catch (fallbackError) {
-      console.error('Fallback PDF generation also failed:', fallbackError);
-      throw new Error('PDF generation failed after multiple attempts');
-    }
+    throw error;
   }
 }
 
