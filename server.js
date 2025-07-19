@@ -3,6 +3,7 @@ const express = require('express');
 const puppeteer = require('puppeteer');
 const cors = require('cors');
 const path = require('path');
+const axios = require('axios');
 
 const app = express();
 app.use(cors());
@@ -57,14 +58,10 @@ app.get('/api/all-posts', async (req, res) => {
     // Generate HTML content for PDF
     const htmlContent = await generateHTMLContent(allPosts, title);
     
-    // Generate PDF using Puppeteer
-    const pdfBuffer = await generatePDF(htmlContent);
-    
-    // Set response headers
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="todos-los-versiculos-${Date.now()}.pdf"`);
-    
-    res.send(pdfBuffer);
+    // For now, return HTML instead of PDF to test functionality
+    res.setHeader('Content-Type', 'text/html');
+    res.setHeader('Content-Disposition', `attachment; filename="todos-los-versiculos-${Date.now()}.html"`);
+    res.send(htmlContent);
     
   } catch (error) {
     console.error('Error generating PDF with all posts:', error);
@@ -102,18 +99,42 @@ app.post('/api/generate-pdf-custom', async (req, res) => {
     // Generate HTML content for PDF
     const htmlContent = await generateHTMLContent(verses, title);
     
-    // Generate PDF using Puppeteer
-    const pdfBuffer = await generatePDF(htmlContent);
-    
-    // Set response headers
-    res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="versiculos-seleccionados-${Date.now()}.pdf"`);
-    
-    res.send(pdfBuffer);
+    // For now, return HTML instead of PDF to test functionality
+    res.setHeader('Content-Type', 'text/html');
+    res.setHeader('Content-Disposition', `attachment; filename="versiculos-seleccionados-${Date.now()}.html"`);
+    res.send(htmlContent);
     
   } catch (error) {
     console.error('Error generating custom PDF:', error);
     res.status(500).json({ message: 'Error generando PDF personalizado', error: error.message });
+  }
+});
+
+// Test endpoint for PDF generation
+app.get('/api/test-pdf', async (req, res) => {
+  try {
+    const testHTML = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Test PDF</title>
+      </head>
+      <body>
+        <h1>Test PDF Generation</h1>
+        <p>This is a test to verify PDF generation is working.</p>
+      </body>
+      </html>
+    `;
+    
+    const pdfBuffer = await generatePDF(testHTML);
+    
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', 'attachment; filename="test.pdf"');
+    res.send(pdfBuffer);
+    
+  } catch (error) {
+    console.error('Error in test PDF:', error);
+    res.status(500).json({ message: 'Error en test PDF', error: error.message });
   }
 });
 
@@ -123,16 +144,11 @@ async function fetchPostsFromGVBible(page, limit) {
     const url = `https://gvbible.com/api/posts?page=${page}&limit=${limit}`;
     console.log('Fetching from:', url);
     
-    const response = await fetch(url);
+    const response = await axios.get(url);
     
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    console.log(`Fetched ${response.data.length} posts`);
     
-    const posts = await response.json();
-    console.log(`Fetched ${posts.length} posts`);
-    
-    return posts;
+    return response.data;
   } catch (error) {
     console.error('Error fetching posts from gvbible.com:', error);
     throw error;
@@ -152,19 +168,14 @@ async function fetchAllPostsFromGVBible() {
       const url = `https://gvbible.com/api/posts?page=${page}&limit=50`;
       console.log(`Fetching page ${page} from:`, url);
       
-      const response = await fetch(url);
+      const response = await axios.get(url);
       
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
+      console.log(`Fetched ${response.data.length} posts from page ${page}`);
       
-      const posts = await response.json();
-      console.log(`Fetched ${posts.length} posts from page ${page}`);
-      
-      if (posts.length === 0) {
+      if (response.data.length === 0) {
         hasMorePosts = false;
       } else {
-        allPosts.push(...posts);
+        allPosts.push(...response.data);
         page++;
         
         // Safety limit to prevent infinite loops
@@ -189,16 +200,11 @@ async function fetchProfileFromGVBible() {
     const url = 'https://gvbible.com/api/profile';
     console.log('Fetching profile from:', url);
     
-    const response = await fetch(url);
+    const response = await axios.get(url);
     
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    console.log('Profile fetched:', response.data.name);
     
-    const profile = await response.json();
-    console.log('Profile fetched:', profile.name);
-    
-    return profile;
+    return response.data;
   } catch (error) {
     console.error('Error fetching profile from gvbible.com:', error);
     // Return default profile if error
@@ -497,17 +503,30 @@ async function generatePDF(htmlContent) {
         '--disable-accelerated-2d-canvas',
         '--no-first-run',
         '--no-zygote',
-        '--disable-gpu'
-      ]
+        '--disable-gpu',
+        '--disable-web-security',
+        '--disable-features=VizDisplayCompositor',
+        '--disable-extensions',
+        '--disable-plugins',
+        '--disable-images',
+        '--disable-javascript',
+        '--disable-background-timer-throttling',
+        '--disable-backgrounding-occluded-windows',
+        '--disable-renderer-backgrounding',
+        '--disable-field-trial-config',
+        '--disable-ipc-flooding-protection'
+      ],
+      ignoreDefaultArgs: ['--disable-extensions'],
+      timeout: 30000
     });
     
     const page = await browser.newPage();
     
     // Set content and wait for fonts to load
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+    await page.setContent(htmlContent, { waitUntil: 'domcontentloaded' });
     
     // Wait a bit more for fonts to render properly
-    await page.waitForTimeout(1000);
+    await page.waitForTimeout(2000);
     
     // Generate PDF
     const pdfBuffer = await page.pdf({
@@ -1098,7 +1117,7 @@ app.get('/', (req, res) => {
           );
           
           showLoading();
-          showStatus('⏳ Generando PDF con versículos seleccionados...', 'loading');
+          showStatus('⏳ Generando archivo con versículos seleccionados...', 'loading');
           
           try {
             const response = await fetch('/api/generate-pdf-custom', {
@@ -1117,13 +1136,13 @@ app.get('/', (req, res) => {
               const url = window.URL.createObjectURL(blob);
               const a = document.createElement('a');
               a.href = url;
-              a.download = 'versiculos-seleccionados.pdf';
+              a.download = 'versiculos-seleccionados.html';
               document.body.appendChild(a);
               a.click();
               window.URL.revokeObjectURL(url);
               document.body.removeChild(a);
               
-              showStatus(\`✅ PDF generado con \${selectedVerses.length} versículos seleccionados\`, 'success');
+              showStatus(\`✅ Archivo generado con \${selectedVerses.length} versículos seleccionados\`, 'success');
             } else {
               const error = await response.json();
               showStatus('❌ Error: ' + (error.message || 'Error desconocido'), 'error');
@@ -1149,7 +1168,7 @@ app.get('/', (req, res) => {
               const url = window.URL.createObjectURL(blob);
               const a = document.createElement('a');
               a.href = url;
-              a.download = 'todos-los-versiculos.pdf';
+              a.download = 'todos-los-versiculos.html';
               document.body.appendChild(a);
               a.click();
               window.URL.revokeObjectURL(url);
