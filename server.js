@@ -4,6 +4,7 @@ const puppeteer = require('puppeteer');
 const cors = require('cors');
 const path = require('path');
 const axios = require('axios');
+const htmlPdf = require('html-pdf-node');
 
 const app = express();
 app.use(cors());
@@ -58,10 +59,14 @@ app.get('/api/all-posts', async (req, res) => {
     // Generate HTML content for PDF
     const htmlContent = await generateHTMLContent(allPosts, title);
     
-    // For now, return HTML instead of PDF to test functionality
-    res.setHeader('Content-Type', 'text/html');
-    res.setHeader('Content-Disposition', `attachment; filename="todos-los-versiculos-${Date.now()}.html"`);
-    res.send(htmlContent);
+    // Generate PDF using Puppeteer
+    const pdfBuffer = await generatePDF(htmlContent);
+    
+    // Set response headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="todos-los-versiculos-${Date.now()}.pdf"`);
+    
+    res.send(pdfBuffer);
     
   } catch (error) {
     console.error('Error generating PDF with all posts:', error);
@@ -99,10 +104,14 @@ app.post('/api/generate-pdf-custom', async (req, res) => {
     // Generate HTML content for PDF
     const htmlContent = await generateHTMLContent(verses, title);
     
-    // For now, return HTML instead of PDF to test functionality
-    res.setHeader('Content-Type', 'text/html');
-    res.setHeader('Content-Disposition', `attachment; filename="versiculos-seleccionados-${Date.now()}.html"`);
-    res.send(htmlContent);
+    // Generate PDF using Puppeteer
+    const pdfBuffer = await generatePDF(htmlContent);
+    
+    // Set response headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="versiculos-seleccionados-${Date.now()}.pdf"`);
+    
+    res.send(pdfBuffer);
     
   } catch (error) {
     console.error('Error generating custom PDF:', error);
@@ -489,67 +498,29 @@ async function generateHTMLContent(posts, title) {
   `;
 }
 
-// Generate PDF using Puppeteer
+// Generate PDF using html-pdf-node
 async function generatePDF(htmlContent) {
-  let browser;
-  
   try {
-    browser = await puppeteer.launch({
-      headless: 'new',
-      args: [
-        '--no-sandbox',
-        '--disable-setuid-sandbox',
-        '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--no-first-run',
-        '--no-zygote',
-        '--disable-gpu',
-        '--disable-web-security',
-        '--disable-features=VizDisplayCompositor',
-        '--disable-extensions',
-        '--disable-plugins',
-        '--disable-images',
-        '--disable-javascript',
-        '--disable-background-timer-throttling',
-        '--disable-backgrounding-occluded-windows',
-        '--disable-renderer-backgrounding',
-        '--disable-field-trial-config',
-        '--disable-ipc-flooding-protection'
-      ],
-      ignoreDefaultArgs: ['--disable-extensions'],
-      timeout: 30000
-    });
-    
-    const page = await browser.newPage();
-    
-    // Set content and wait for fonts to load
-    await page.setContent(htmlContent, { waitUntil: 'domcontentloaded' });
-    
-    // Wait a bit more for fonts to render properly
-    await page.waitForTimeout(2000);
-    
-    // Generate PDF
-    const pdfBuffer = await page.pdf({
+    const options = {
       format: 'A4',
-      printBackground: true,
       margin: {
         top: '20mm',
         right: '20mm',
         bottom: '20mm',
         left: '20mm'
       },
+      printBackground: true,
       preferCSSPageSize: true
-    });
+    };
+    
+    const file = { content: htmlContent };
+    const pdfBuffer = await htmlPdf.generatePdf(file, options);
     
     return pdfBuffer;
     
   } catch (error) {
     console.error('Error generating PDF:', error);
     throw error;
-  } finally {
-    if (browser) {
-      await browser.close();
-    }
   }
 }
 
@@ -1117,7 +1088,7 @@ app.get('/', (req, res) => {
           );
           
           showLoading();
-          showStatus('⏳ Generando archivo con versículos seleccionados...', 'loading');
+          showStatus('⏳ Generando PDF con versículos seleccionados...', 'loading');
           
           try {
             const response = await fetch('/api/generate-pdf-custom', {
@@ -1136,13 +1107,13 @@ app.get('/', (req, res) => {
               const url = window.URL.createObjectURL(blob);
               const a = document.createElement('a');
               a.href = url;
-              a.download = 'versiculos-seleccionados.html';
+              a.download = 'versiculos-seleccionados.pdf';
               document.body.appendChild(a);
               a.click();
               window.URL.revokeObjectURL(url);
               document.body.removeChild(a);
               
-              showStatus(\`✅ Archivo generado con \${selectedVerses.length} versículos seleccionados\`, 'success');
+              showStatus(\`✅ PDF generado con \${selectedVerses.length} versículos seleccionados\`, 'success');
             } else {
               const error = await response.json();
               showStatus('❌ Error: ' + (error.message || 'Error desconocido'), 'error');
@@ -1168,7 +1139,7 @@ app.get('/', (req, res) => {
               const url = window.URL.createObjectURL(blob);
               const a = document.createElement('a');
               a.href = url;
-              a.download = 'todos-los-versiculos.html';
+              a.download = 'todos-los-versiculos.pdf';
               document.body.appendChild(a);
               a.click();
               window.URL.revokeObjectURL(url);
