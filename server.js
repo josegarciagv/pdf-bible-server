@@ -911,6 +911,28 @@ app.get('/', (req, res) => {
             </button>
           </div>
           
+          <div class="verses-section">
+            <h3>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21,5c-1.11-0.35-2.33-0.5-3.5-0.5c-1.95,0-4.05,0.4-5.5,1.5c-1.45-1.1-3.55-1.5-5.5-1.5S2.45,4.9,1,6v14.65c0,0.25,0.25,0.5,0.5,0.5c0.1,0,0.15-0.05,0.25-0.05C3.1,20.45,5.05,20,6.5,20c1.95,0,4.05,0.4,5.5,1.5c1.35-0.85,3.8-1.5,5.5-1.5c1.65,0,3.35,0.3,4.75,1.05c0.1,0.05,0.15,0.05,0.25,0.05c0.25,0,0.5-0.25,0.5-0.5V6C22.4,5.55,21.75,5.25,21,5z M21,18.5c-1.1-0.35-2.3-0.5-3.5-0.5c-1.7,0-4.15,0.65-5.5,1.5V8c1.35-0.85,3.8-1.5,5.5-1.5c1.2,0,2.4,0.15,3.5,0.5V18.5z"/>
+              </svg>
+              Versículos Disponibles
+            </h3>
+            
+            <div class="select-all-container">
+              <label>
+                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                <span>Seleccionar Todos</span>
+              </label>
+            </div>
+            
+            <div id="versesList">
+              <div class="no-verses">
+                Cargando versículos...
+              </div>
+            </div>
+          </div>
+          
           <div class="form-group">
             <label for="title">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 6px;">
@@ -941,28 +963,6 @@ app.get('/', (req, res) => {
               </svg>
               Descargar Todos
             </button>
-          </div>
-          
-          <div class="verses-section">
-            <h3>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M21,5c-1.11-0.35-2.33-0.5-3.5-0.5c-1.95,0-4.05,0.4-5.5,1.5c-1.45-1.1-3.55-1.5-5.5-1.5S2.45,4.9,1,6v14.65c0,0.25,0.25,0.5,0.5,0.5c0.1,0,0.15-0.05,0.25-0.05C3.1,20.45,5.05,20,6.5,20c1.95,0,4.05,0.4,5.5,1.5c1.35-0.85,3.8-1.5,5.5-1.5c1.65,0,3.35,0.3,4.75,1.05c0.1,0.05,0.15,0.05,0.25,0.05c0.25,0,0.5-0.25,0.5-0.5V6C22.4,5.55,21.75,5.25,21,5z M21,18.5c-1.1-0.35-2.3-0.5-3.5-0.5c-1.7,0-4.15,0.65-5.5,1.5V8c1.35-0.85,3.8-1.5,5.5-1.5c1.2,0,2.4,0.15,3.5,0.5V18.5z"/>
-              </svg>
-              Versículos Disponibles
-            </h3>
-            
-            <div class="select-all-container">
-              <label>
-                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
-                <span>Seleccionar Todos</span>
-              </label>
-            </div>
-            
-            <div id="versesList">
-              <div class="no-verses">
-                Cargando versículos...
-              </div>
-            </div>
           </div>
           
           <div id="status" class="status"></div>
