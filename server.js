@@ -72,6 +72,51 @@ app.get('/api/all-posts', async (req, res) => {
   }
 });
 
+// Get all posts data endpoint (for search functionality)
+app.get('/api/all-posts-data', async (req, res) => {
+  try {
+    // Fetch all posts from gvbible.com API (multiple pages)
+    const allPosts = await fetchAllPostsFromGVBible();
+    
+    if (!allPosts || allPosts.length === 0) {
+      return res.status(404).json({ message: 'No se encontraron versículos' });
+    }
+    
+    res.json(allPosts);
+    
+  } catch (error) {
+    console.error('Error fetching all posts data:', error);
+    res.status(500).json({ message: 'Error obteniendo datos de versículos', error: error.message });
+  }
+});
+
+// Generate custom PDF with selected verses
+app.post('/api/generate-pdf-custom', async (req, res) => {
+  try {
+    const { verses, title = 'Versículos Seleccionados' } = req.body;
+    
+    if (!verses || !Array.isArray(verses) || verses.length === 0) {
+      return res.status(400).json({ message: 'No se proporcionaron versículos válidos' });
+    }
+    
+    // Generate HTML content for PDF
+    const htmlContent = await generateHTMLContent(verses, title);
+    
+    // Generate PDF using Puppeteer
+    const pdfBuffer = await generatePDF(htmlContent);
+    
+    // Set response headers
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="versiculos-seleccionados-${Date.now()}.pdf"`);
+    
+    res.send(pdfBuffer);
+    
+  } catch (error) {
+    console.error('Error generating custom PDF:', error);
+    res.status(500).json({ message: 'Error generando PDF personalizado', error: error.message });
+  }
+});
+
 // Fetch posts from gvbible.com API
 async function fetchPostsFromGVBible(page, limit) {
   try {
@@ -530,7 +575,7 @@ app.get('/', (req, res) => {
           border-radius: 20px;
           box-shadow: 0 20px 40px rgba(0,0,0,0.1);
           overflow: hidden;
-          max-width: 600px;
+          max-width: 800px;
           width: 100%;
         }
         
@@ -619,6 +664,109 @@ app.get('/', (req, res) => {
           box-shadow: 0 0 0 3px rgba(255, 0, 0, 0.1);
         }
         
+        .search-section {
+          background: #f8f9fa;
+          border-radius: 15px;
+          padding: 25px;
+          margin-bottom: 30px;
+          border: 2px solid #e9ecef;
+        }
+        
+        .search-section h3 {
+          margin-bottom: 15px;
+          color: #2c3e50;
+          font-size: 18px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        
+        .verses-section {
+          background: #f8f9fa;
+          border-radius: 15px;
+          padding: 25px;
+          margin-bottom: 30px;
+          border: 2px solid #e9ecef;
+          max-height: 400px;
+          overflow-y: auto;
+        }
+        
+        .verses-section h3 {
+          margin-bottom: 15px;
+          color: #2c3e50;
+          font-size: 18px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+        }
+        
+        .select-all-container {
+          margin-bottom: 20px;
+          padding: 15px;
+          background: white;
+          border-radius: 10px;
+          border: 2px solid #e9ecef;
+        }
+        
+        .select-all-container label {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          font-weight: 600;
+          color: #2c3e50;
+          cursor: pointer;
+        }
+        
+        .select-all-container input[type="checkbox"] {
+          width: auto;
+          margin: 0;
+        }
+        
+        .verse-item {
+          background: white;
+          border-radius: 10px;
+          padding: 15px;
+          margin-bottom: 10px;
+          border: 2px solid #e9ecef;
+          transition: all 0.3s ease;
+        }
+        
+        .verse-item:hover {
+          border-color: #ff0000;
+          box-shadow: 0 4px 12px rgba(255, 0, 0, 0.1);
+        }
+        
+        .verse-item label {
+          display: flex;
+          align-items: flex-start;
+          gap: 10px;
+          cursor: pointer;
+          margin: 0;
+        }
+        
+        .verse-item input[type="checkbox"] {
+          width: auto;
+          margin: 0;
+          margin-top: 2px;
+        }
+        
+        .verse-content {
+          flex: 1;
+        }
+        
+        .verse-title {
+          font-weight: 600;
+          color: #2c3e50;
+          margin-bottom: 5px;
+          font-size: 16px;
+        }
+        
+        .verse-text {
+          color: #6c757d;
+          font-size: 14px;
+          line-height: 1.5;
+        }
+        
         .button-group {
           display: flex;
           gap: 15px;
@@ -662,6 +810,12 @@ app.get('/', (req, res) => {
           transform: translateY(-2px);
         }
         
+        .btn:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+        }
+        
         .status {
           margin-top: 20px;
           padding: 15px;
@@ -703,7 +857,12 @@ app.get('/', (req, res) => {
           to { transform: rotate(360deg); }
         }
         
-
+        .no-verses {
+          text-align: center;
+          color: #6c757d;
+          padding: 40px 20px;
+          font-style: italic;
+        }
         
         @media (max-width: 768px) {
           .button-group {
@@ -731,76 +890,91 @@ app.get('/', (req, res) => {
         </div>
         
         <div class="content">
-
-          
-          <form id="pdfForm">
+          <div class="search-section">
+            <h3>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
+              </svg>
+              Buscar Versículos
+            </h3>
             <div class="form-group">
-              <label for="page">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 6px;">
+              <label for="search">
+                Buscar por título o contenido:
+              </label>
+              <input type="text" id="search" name="search" placeholder="Escribe para buscar versículos...">
+            </div>
+            <button type="button" class="btn btn-primary" onclick="searchVerses()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 6px;">
+                <path d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z"/>
+              </svg>
+              Buscar
+            </button>
+          </div>
+          
+          <div class="verses-section">
+            <h3>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M21,5c-1.11-0.35-2.33-0.5-3.5-0.5c-1.95,0-4.05,0.4-5.5,1.5c-1.45-1.1-3.55-1.5-5.5-1.5S2.45,4.9,1,6v14.65c0,0.25,0.25,0.5,0.5,0.5c0.1,0,0.15-0.05,0.25-0.05C3.1,20.45,5.05,20,6.5,20c1.95,0,4.05,0.4,5.5,1.5c1.35-0.85,3.8-1.5,5.5-1.5c1.65,0,3.35,0.3,4.75,1.05c0.1,0.05,0.15,0.05,0.25,0.05c0.25,0,0.5-0.25,0.5-0.5V6C22.4,5.55,21.75,5.25,21,5z M21,18.5c-1.1-0.35-2.3-0.5-3.5-0.5c-1.7,0-4.15,0.65-5.5,1.5V8c1.35-0.85,3.8-1.5,5.5-1.5c1.2,0,2.4,0.15,3.5,0.5V18.5z"/>
+              </svg>
+              Versículos Disponibles
+            </h3>
+            
+            <div class="select-all-container">
+              <label>
+                <input type="checkbox" id="selectAll" onchange="toggleSelectAll()">
+                <span>Seleccionar Todos</span>
+              </label>
+            </div>
+            
+            <div id="versesList">
+              <div class="no-verses">
+                Haz clic en "Buscar" para cargar versículos
+              </div>
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="title">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 6px;">
+                <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/>
+              </svg>
+              Título del PDF:
+            </label>
+            <input type="text" id="title" name="title" value="Versículos y Reflexiones Bíblicas" placeholder="Título personalizado">
+          </div>
+          
+          <div class="button-group">
+            <button type="button" class="btn btn-primary" onclick="downloadSelectedVerses()" id="downloadBtn" disabled>
+              <span class="btn-text">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 6px;">
                   <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
                 </svg>
-                Página:
-              </label>
-              <input type="number" id="page" name="page" value="0" min="0" placeholder="0 = primera página">
-            </div>
+                Descargar Versículos
+              </span>
+              <span class="btn-loading" style="display: none;">
+                <span class="loading-spinner"></span>
+                Descargando...
+              </span>
+            </button>
             
-            <div class="form-group">
-              <label for="limit">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 6px;">
-                  <path d="M3,13H5V11H3V13M3,17H5V15H3V17M3,9H5V7H3V9M7,13H21V11H7V13M7,17H21V15H7V17M7,7V9H21V7H7Z"/>
-                </svg>
-                Versículos por página:
-              </label>
-              <select id="limit" name="limit">
-                <option value="5">5 versículos</option>
-                <option value="10" selected>10 versículos</option>
-                <option value="15">15 versículos</option>
-                <option value="20">20 versículos</option>
-                <option value="30">30 versículos</option>
-                <option value="50">50 versículos</option>
-              </select>
-            </div>
-            
-            <div class="form-group">
-              <label for="title">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 6px;">
-                  <path d="M20.71,7.04C21.1,6.65 21.1,6 20.71,5.63L18.37,3.29C18,2.9 17.35,2.9 16.96,3.29L15.12,5.12L18.87,8.87M3,17.25V21H6.75L17.81,9.93L14.06,6.18L3,17.25Z"/>
-                </svg>
-                Título del PDF:
-              </label>
-              <input type="text" id="title" name="title" value="Versículos y Reflexiones Bíblicas" placeholder="Título personalizado">
-            </div>
-            
-            <div class="button-group">
-              <button type="submit" class="btn btn-primary">
-                <span class="btn-text">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 6px;">
-                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z"/>
-                  </svg>
-                  Generar PDF
-                </span>
-                <span class="btn-loading" style="display: none;">
-                  <span class="loading-spinner"></span>
-                  Downloading...
-                </span>
-              </button>
-              
-              <button type="button" class="btn btn-secondary" onclick="generateAllPosts()">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 6px;">
-                  <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,5V19H5V5H19Z"/>
-                </svg>
-                Todos los Versículos
-              </button>
-            </div>
-          </form>
+            <button type="button" class="btn btn-secondary" onclick="downloadAllVerses()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" style="display: inline; margin-right: 6px;">
+                <path d="M19,3H5C3.89,3 3,3.89 3,5V19A2,2 0 0,0 5,21H19A2,2 0 0,0 21,19V5C21,3.89 20.1,3 19,3M19,5V19H5V5H19Z"/>
+              </svg>
+              Descargar Todos
+            </button>
+          </div>
           
           <div id="status" class="status"></div>
         </div>
       </div>
       
       <script>
-        const form = document.getElementById('pdfForm');
+        let allVerses = [];
+        let filteredVerses = [];
+        
         const statusDiv = document.getElementById('status');
+        const downloadBtn = document.getElementById('downloadBtn');
         const btnText = document.querySelector('.btn-text');
         const btnLoading = document.querySelector('.btn-loading');
         
@@ -820,26 +994,112 @@ app.get('/', (req, res) => {
           btnLoading.style.display = 'none';
         }
         
-        form.addEventListener('submit', async (e) => {
-          e.preventDefault();
+        function renderVerses(verses) {
+          const versesList = document.getElementById('versesList');
+          
+          if (verses.length === 0) {
+            versesList.innerHTML = '<div class="no-verses">No se encontraron versículos</div>';
+            return;
+          }
+          
+          versesList.innerHTML = verses.map((verse, index) => \`
+            <div class="verse-item">
+              <label>
+                <input type="checkbox" class="verse-checkbox" value="\${index}" onchange="updateDownloadButton()">
+                <div class="verse-content">
+                  <div class="verse-title">\${verse.title}</div>
+                  <div class="verse-text">\${verse.content.substring(0, 100)}\${verse.content.length > 100 ? '...' : ''}</div>
+                </div>
+              </label>
+            </div>
+          \`).join('');
+          
+          updateDownloadButton();
+        }
+        
+        function updateDownloadButton() {
+          const checkboxes = document.querySelectorAll('.verse-checkbox:checked');
+          downloadBtn.disabled = checkboxes.length === 0;
+        }
+        
+        function toggleSelectAll() {
+          const selectAllCheckbox = document.getElementById('selectAll');
+          const checkboxes = document.querySelectorAll('.verse-checkbox');
+          
+          checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+          });
+          
+          updateDownloadButton();
+        }
+        
+        async function searchVerses() {
+          const searchTerm = document.getElementById('search').value.trim();
+          
+          if (!searchTerm) {
+            showStatus('❌ Por favor ingresa un término de búsqueda', 'error');
+            return;
+          }
           
           showLoading();
-          showStatus('⏳ Descargando PDF...', 'loading');
-          
-          const formData = new FormData(e.target);
-          const data = {
-            page: parseInt(formData.get('page')),
-            limit: parseInt(formData.get('limit')),
-            title: formData.get('title')
-          };
+          showStatus('⏳ Buscando versículos...', 'loading');
           
           try {
-            const response = await fetch('/api/generate-pdf', {
+            // For now, we'll fetch all verses and filter client-side
+            // In a real implementation, you'd want a search API endpoint
+            const response = await fetch('/api/all-posts-data');
+            
+            if (response.ok) {
+              allVerses = await response.json();
+              
+              // Filter verses based on search term
+              filteredVerses = allVerses.filter(verse => 
+                verse.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                verse.content.toLowerCase().includes(searchTerm.toLowerCase())
+              );
+              
+              renderVerses(filteredVerses);
+              
+              if (filteredVerses.length > 0) {
+                showStatus(\`✅ Se encontraron \${filteredVerses.length} versículos\`, 'success');
+              } else {
+                showStatus('❌ No se encontraron versículos con ese término', 'error');
+              }
+            } else {
+              showStatus('❌ Error al buscar versículos', 'error');
+            }
+          } catch (error) {
+            showStatus('❌ Error de conexión: ' + error.message, 'error');
+          } finally {
+            hideLoading();
+          }
+        }
+        
+        async function downloadSelectedVerses() {
+          const checkboxes = document.querySelectorAll('.verse-checkbox:checked');
+          
+          if (checkboxes.length === 0) {
+            showStatus('❌ Por favor selecciona al menos un versículo', 'error');
+            return;
+          }
+          
+          const selectedVerses = Array.from(checkboxes).map(checkbox => 
+            filteredVerses[parseInt(checkbox.value)]
+          );
+          
+          showLoading();
+          showStatus('⏳ Generando PDF con versículos seleccionados...', 'loading');
+          
+          try {
+            const response = await fetch('/api/generate-pdf-custom', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json'
               },
-              body: JSON.stringify(data)
+              body: JSON.stringify({
+                verses: selectedVerses,
+                title: document.getElementById('title').value || 'Versículos Seleccionados'
+              })
             });
             
             if (response.ok) {
@@ -847,13 +1107,13 @@ app.get('/', (req, res) => {
               const url = window.URL.createObjectURL(blob);
               const a = document.createElement('a');
               a.href = url;
-              a.download = 'versiculos-biblicos.pdf';
+              a.download = 'versiculos-seleccionados.pdf';
               document.body.appendChild(a);
               a.click();
               window.URL.revokeObjectURL(url);
               document.body.removeChild(a);
               
-              showStatus('✅ PDF generado y descargado exitosamente', 'success');
+              showStatus(\`✅ PDF generado con \${selectedVerses.length} versículos seleccionados\`, 'success');
             } else {
               const error = await response.json();
               showStatus('❌ Error: ' + (error.message || 'Error desconocido'), 'error');
@@ -863,9 +1123,9 @@ app.get('/', (req, res) => {
           } finally {
             hideLoading();
           }
-        });
+        }
         
-        async function generateAllPosts() {
+        async function downloadAllVerses() {
           showLoading();
           showStatus('⏳ Descargando todos los versículos...', 'loading');
           
@@ -896,6 +1156,13 @@ app.get('/', (req, res) => {
             hideLoading();
           }
         }
+        
+        // Allow search on Enter key
+        document.getElementById('search').addEventListener('keypress', function(e) {
+          if (e.key === 'Enter') {
+            searchVerses();
+          }
+        });
       </script>
     </body>
     </html>
